@@ -1,0 +1,251 @@
+<?xml version="1.0"?>
+<pset>
+
+    <!--
+        CS 564, FALL 2025
+        HOMEWORK 1 SUBMISSION TEMPLATE
+
+        Please copy and paste your SQL queries into the appropriate spots below. 
+
+        When submitting SQL queries, please do not include the initial 
+        %sql or %%sql IPython commands. Just include the SQL code.
+
+        DO NOT DELETE THE <![CDATA[ ... ]]> LINES IN EACH <answer> TAG!
+        Doing so will break the autograder. To avoid accidentally breaking
+        something, please leave all existing comments in this template
+        intact in your submission.
+    -->
+
+    <student>
+        <name>
+            <!-- Insert your full name on the line below. -->
+            Damion Huppert
+        </name>
+        <studentid>
+            <!-- Insert your student ID number below. -->
+            9083043811
+        </studentid>
+    </student>
+
+
+    <!-- BEGIN PROBLEM 1 -->
+    <answer number="1a">
+        <!-- Paste your solution to problem 1, part (a) below this line. --><![CDATA[
+SELECT a.i, a.j, a.val + b.val as val 
+FROM A a
+JOIN B b 
+ON b.i = a.i 
+AND b.j = a.j;
+        ]]><!-- End problem 1, part (a). -->
+    </answer>
+    <answer number="1b">
+        <!-- Paste your solution to problem 1, part (b) below this line. --><![CDATA[
+SELECT sum(a.val * b.val) AS DotProduct
+FROM A 
+JOIN B b 
+ON a.i = b.i
+WHERE a.j = 0 
+AND b.j = 1;
+        ]]><!-- End problem 1, part (b). -->
+    </answer>
+    <answer number="1c">
+        <!-- Paste your solution to problem 1, part (c) below this line. --><![CDATA[
+
+SELECT 
+    a.i,
+    b.j,
+    SUM(a.val * b.val) AS val
+FROM A a
+JOIN B b 
+ON a.j = b.i
+GROUP BY a.i, b.j;
+
+        ]]><!-- End problem 1, part (c). -->
+    </answer>
+    <answer number="1d">
+        <!-- Paste your solution to problem 1, part (d) below this line. --><![CDATA[
+
+WITH 
+A_squared AS (
+    SELECT a1.i, a2.j, SUM(a1.val * a2.val) AS val
+    FROM A a1 JOIN A a2 ON a1.j = a2.i
+    GROUP BY a1.i, a2.j
+),
+C AS (
+    SELECT a.i, b.j, SUM(a.val * b.val) AS val
+    FROM A a JOIN B b ON a.j = b.i
+    GROUP BY a.i, b.j
+),
+C_squared AS (
+    SELECT c1.i, c2.j, SUM(c1.val * c2.val) AS val
+    FROM C c1 JOIN C c2 ON c1.j = c2.i
+    GROUP BY c1.i, c2.j
+)
+SELECT 
+    a_sq.i,
+    a_sq.j,
+    a_sq.val + 2 * c_sq.val AS val
+FROM A_squared a_sq
+JOIN C_squared c_sq ON a_sq.i = c_sq.i AND a_sq.j = c_sq.j
+ORDER BY a_sq.i, a_sq.j;
+
+        ]]><!-- End problem 1, part (d). -->
+    </answer>
+    <!-- END PROBLEM 1 -->
+
+
+    <!-- BEGIN PROBLEM 2 -->
+    <answer number="2a">
+        <!-- Paste your solution to problem 2, part (a) below this line. --><![CDATA[
+
+SELECT s.store, sum(s.weeklysales) AS AllSales
+FROM Sales s
+JOIN Holidays h ON h.weekdate = s.weekdate
+WHERE h.IsHoliday = 'TRUE'
+GROUP BY s.store
+ORDER BY AllSales desc
+LIMIT 1;
+
+        ]]><!-- End problem 2, part (a). -->
+    </answer>
+    <answer number="2b">
+        <!-- Paste your solution to problem 2, part (b) below this line. --><![CDATA[
+
+WITH
+Holiday_Week_Average AS (
+    SELECT AVG(weekly_total) AS HolidaySalesAvg
+    FROM (
+        SELECT h.weekdate, SUM(s.weeklysales) AS weekly_total
+        FROM Sales s
+        JOIN Holidays h ON h.weekdate = s.weekdate
+        WHERE h.IsHoliday = 'TRUE'
+        GROUP BY h.weekdate
+    ) holiday_totals
+),
+Weekly_Averages AS (
+    SELECT h.weekdate, h.isholiday, SUM(s.weeklysales) AS WeekAvg
+    FROM Sales s
+    JOIN Holidays h ON h.weekdate = s.weekdate
+    GROUP BY h.weekdate, h.isholiday
+)
+SELECT COUNT(*) AS NumberNonHolidays
+FROM Holiday_Week_Average h
+CROSS JOIN Weekly_Averages w
+WHERE w.WeekAvg > h.HolidaySalesAvg
+    AND w.isholiday = 'FALSE';
+
+        ]]><!-- End problem 2, part (b). -->
+    </answer>
+    <answer number="2c">
+        <!-- Paste your solution to problem 2, part (c) below this line. --><![CDATA[
+
+SELECT s.type, AVG(sa.weeklysales) as AvgSales
+FROM Stores s
+JOIN Sales sa ON s.store = sa.store
+WHERE sa.weekdate LIKE '%-12-%' 
+   OR sa.weekdate LIKE '%-01-%' 
+   OR sa.weekdate LIKE '%-02-%'
+GROUP BY s.type;
+
+        ]]><!-- End problem 2, part (c). -->
+    </answer>
+    <!-- END PROBLEM 2 -->
+
+
+    <!-- BEGIN PROBLEM 3 -->
+    <answer number="3a">
+        <!-- Paste your solution to problem 3, part (a) below this line. --><![CDATA[
+
+SELECT company, distance
+FROM (
+    SELECT B AS company, d AS distance
+    FROM streets
+    WHERE A = "UW-Madison" AND d <= 10
+    
+    UNION ALL
+    
+    SELECT s2.B AS company, (s1.d + s2.d) AS distance
+    FROM streets s1
+    JOIN streets s2 ON s1.B = s2.A
+    WHERE s1.A = "UW-Madison" 
+      AND s1.d <= 10
+      AND (s1.d + s2.d) <= 10
+      AND s2.B != "UW-Madison"
+      AND s2.B != s1.A
+    
+    UNION ALL
+    
+    SELECT s3.B AS company, (s1.d + s2.d + s3.d) AS distance
+    FROM streets s1
+    JOIN streets s2 ON s1.B = s2.A
+    JOIN streets s3 ON s2.B = s3.A
+    WHERE s1.A = "UW-Madison"
+      AND s1.d <= 10
+      AND (s1.d + s2.d) <= 10
+      AND (s1.d + s2.d + s3.d) <= 10
+      AND s3.B != "UW-Madison"
+      AND s3.B NOT IN (s1.A, s2.A)
+) subquery
+ORDER BY company;
+
+        ]]><!-- End problem 3, part (a). -->
+    </answer>
+    <answer number="3b">
+        <!-- Paste your solution to problem 3, part (b) below this line. --><![CDATA[
+
+SELECT 
+    route_uw_to_b.company AS company_1,
+    route_a_to_uw.company AS company_2,
+    route_a_to_uw.distance + route_uw_to_b.distance AS distance
+FROM (
+    SELECT B AS company, d AS distance
+    FROM streets
+    WHERE A = "UW-Madison"
+    
+    UNION ALL
+    
+    SELECT s1.B AS company, (s1.d + s2.d) AS distance
+    FROM streets s1
+    JOIN streets s2 ON s1.B = s2.A
+    WHERE s1.A = "UW-Madison" 
+      AND s2.B != "UW-Madison"
+      AND s2.B != s1.A
+) route_a_to_uw
+CROSS JOIN (
+    SELECT B AS company, d AS distance
+    FROM streets
+    WHERE A = "UW-Madison"
+    
+    UNION ALL
+    
+    SELECT s2.B AS company, (s1.d + s2.d) AS distance
+    FROM streets s1
+    JOIN streets s2 ON s1.B = s2.A
+    WHERE s1.A = "UW-Madison"
+      AND s2.B != "UW-Madison"
+      AND s2.B != s1.A
+) route_uw_to_b
+WHERE route_a_to_uw.company < route_uw_to_b.company
+  AND route_a_to_uw.distance + route_uw_to_b.distance <= 15
+ORDER BY company_1;
+
+        ]]><!-- End problem 3, part (b). -->
+    </answer>
+    <answer number="3c">
+        <!-- Paste your solution to problem 3, part (c) below this line. --><![CDATA[
+
+SELECT (s1.d + s2.d + s3.d) AS LongestDistance
+FROM streets s1
+JOIN streets s2 ON s1.B = s2.A
+JOIN streets s3 ON s2.B = s3.A
+WHERE s2.B != s1.A
+  AND s3.B = s1.A
+ORDER BY LongestDistance
+LIMIT 1;
+
+        ]]><!-- End problem 3, part (c). -->
+    </answer>
+    <!-- END PROBLEM 3 -->
+
+
+</pset>

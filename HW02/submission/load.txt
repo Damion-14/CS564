@@ -1,0 +1,15 @@
+-- Set the mode to CSV with custom separator
+.mode csv
+.separator |
+
+-- Import USERS data
+.import users.dat USERS
+
+-- Import ITEM data
+.import items.dat ITEM
+
+-- Import ITEM_CATEGORIES data
+.import item_categories.dat ITEM_CATEGORIES
+
+-- Import BIDS data
+.import bids.dat BIDS
